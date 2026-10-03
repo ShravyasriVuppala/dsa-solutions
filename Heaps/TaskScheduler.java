@@ -1,40 +1,55 @@
 class Solution {
     public int leastInterval(char[] tasks, int n) {
-        //freq array of tasks
+        // Count frequency of each task.
         int[] freq = new int[26];
-        for(char c : tasks){
-            freq[c - 'A']++;
+
+        for (char task : tasks) {
+            freq[task - 'A']++;
         }
-        //push tasks and their freq to max heap so we greedily pick most remaining tasks
-        Queue<int[]> maxHeap = new PriorityQueue<>((a, b) -> b[1] - a[1]);
-        for(int i = 0; i < 26; i++){
-            if(freq[i] > 0)
+
+        // Max heap: task with the highest remaining frequency comes first.
+        PriorityQueue<int[]> maxHeap =
+                new PriorityQueue<>((a, b) -> Integer.compare(b[1], a[1]));
+
+        for (int i = 0; i < 26; i++) {
+            if (freq[i] > 0) {
                 maxHeap.offer(new int[]{i, freq[i]});
+            }
         }
-        //cool down queue
+
+        // Each entry:
+        // [taskIndex, remainingFrequency, nextAvailableTime]
         Queue<int[]> cooldown = new LinkedList<>();
-        int ans = 0;
-        while(!maxHeap.isEmpty() || !cooldown.isEmpty()){
-            //move any task whose cooldown has expired back into the heap FIRST,
-            //so it can be executed this same tick instead of wasting a tick
-            if(!cooldown.isEmpty()){
-                int[] task = cooldown.peek();
-                if(ans >= task[2]){ //if cooling interval is exhausted
-                    task = cooldown.poll();
-                    maxHeap.offer(new int[]{task[0], task[1]});
-                }
+
+        int time = 0;
+
+        while (!maxHeap.isEmpty() || !cooldown.isEmpty()) {
+
+            // Move all tasks whose cooldown has expired back into the heap.
+            while (!cooldown.isEmpty() && cooldown.peek()[2] <= time) {
+                int[] task = cooldown.poll();
+                maxHeap.offer(new int[]{task[0], task[1]});
             }
-            //if maxheap is not empty, poll the most remaining task
-            if(!maxHeap.isEmpty()){
+
+            // Execute the most frequent available task.
+            if (!maxHeap.isEmpty()) {
                 int[] task = maxHeap.poll();
+
                 task[1]--;
-                if(task[1] > 0){
-                    //more tasks remaining -> add to cool down queue to wait out n intervals
-                    cooldown.offer(new int[]{task[0], task[1], ans + n + 1});
+
+                // If this task still has occurrences remaining,
+                // put it into cooldown.
+                if (task[1] > 0) {
+                    cooldown.offer(
+                            new int[]{task[0], task[1], time + n + 1}
+                    );
                 }
             }
-            ans++; //increment interval
+
+            // Even if no task executes, this represents an idle interval.
+            time++;
         }
-        return ans;
+
+        return time;
     }
 }
