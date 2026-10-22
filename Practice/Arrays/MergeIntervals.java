@@ -1,21 +1,21 @@
 class Solution {
     public int[][] merge(int[][] intervals) {
-        //sort intervals based on start time
-        Arrays.sort(intervals, (a, b) -> Integer.compare(a[0], b[0]));
-        int[] currInterval = intervals[0];
-        List<int[]> result = new ArrayList<>();
-        result.add(currInterval);
+        //sort based on start time
+        Arrays.sort(intervals, (a,b) -> a[0] - b[0]);
+
+        int[] current = intervals[0];
+        ArrayList<int[]> result = new ArrayList<>();
         for(int[] interval : intervals){
-            //if start time of interval is greater than end time of currinterval -> non-overlapping
-            if(interval[0] > currInterval[1]){
-                currInterval = interval;
-                result.add(currInterval);
+            //if interval start > current interval end, add current to result
+            if(interval[0] > current[1]){
+                result.add(current);
+                current = interval;
             }
-            else{
-                //overlapping, update end time of currInterval
-                currInterval[1] = Math.max(currInterval[1], interval[1]);
+            else { // overlapping interval
+                current[1] = Math.max(current[1], interval[1]);
             }
         }
+        result.add(current);
         return result.toArray(new int[result.size()][]);
     }
 }
